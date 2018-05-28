@@ -1,5 +1,7 @@
 # hl (WIP)
 
+[![Build Status](https://travis-ci.org/rleungx/hl.svg?branch=master)](https://travis-ci.org/rleungx/hl)
+
 ## Building
 ```sh
 $ git clone https://github.com/rleungx/hl.git
