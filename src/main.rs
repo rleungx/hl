@@ -6,6 +6,7 @@ use ansi_term::Colour::{Green, Red};
 use clap::{App, Arg};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Error};
+use std::process::exit;
 
 fn main() -> Result<(), Error> {
     let matches = App::new(crate_name!())
@@ -52,7 +53,10 @@ fn main() -> Result<(), Error> {
         .value_of("lines")
         .unwrap_or("10")
         .parse::<i32>()
-        .unwrap();
+        .unwrap_or_else(|e| {
+            eprintln!("{}", e);
+            exit(1);
+        });
 
     let quiet = matches.is_present("quiet");
 
