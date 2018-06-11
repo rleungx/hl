@@ -72,25 +72,14 @@ fn main() -> Result<(), Error> {
         })
         .unwrap_or_else(|| vec![None]);
 
-    let mode = if matches.is_present("lines") {
-        let lines = matches
-            .value_of("lines")
-            .unwrap_or("10")
-            .parse::<i32>()
-            .unwrap_or_else(|e| {
-                eprintln!("{}", e);
-                exit(1);
-            });
-        Mode::Lines(lines)
-    } else {
+    let mode = if matches.is_present("bytes") {
         let bytes = matches.value_of("bytes").unwrap();
         let re = Regex::new(r"([1-9]\d*)([A-Za-z]+)").unwrap();
         let caps = re.captures(bytes).unwrap_or_else(|| {
-            eprintln!("require a number of bytes");
+            eprintln!("require a number of bytes, e.g., 10B");
             exit(1);
         });
-        let byte = caps
-            .get(1)
+        let byte = caps.get(1)
             .unwrap()
             .as_str()
             .parse::<i32>()
@@ -112,6 +101,16 @@ fn main() -> Result<(), Error> {
             }
         };
         Mode::Bytes(unit * byte)
+    } else {
+        let lines = matches
+            .value_of("lines")
+            .unwrap_or("10")
+            .parse::<i32>()
+            .unwrap_or_else(|e| {
+                eprintln!("{}", e);
+                exit(1);
+            });
+        Mode::Lines(lines)
     };
 
     let quiet = matches.is_present("quiet");
@@ -135,15 +134,24 @@ fn head(file: Option<&str>, mode: Mode, quiet: bool) -> Result<(), Error> {
         }
     };
 
+    let mut line_num = 1;
+
     match mode {
         Mode::Bytes(bytes) => {
+            if !quiet {
+                print!("{}: ", Green.paint(format!("{}", line_num)));
+            }
             for byte in reader.bytes().take(bytes as usize) {
-                print!("{}", byte.unwrap() as char);
+                let c = byte.unwrap() as char;
+                print!("{}", c);
+                if !quiet && c == '\n' {
+                    line_num += 1;
+                    print!("{}: ", Green.paint(format!("{}", line_num)));
+                }
             }
         }
         Mode::Lines(lines) => {
-            let mut line_num = 1;
-            for line in reader.lines() {
+            for line in reader.lines().take(lines as usize) {
                 if line_num <= lines {
                     let l = line.unwrap();
                     if quiet {
